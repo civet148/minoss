@@ -1,0 +1,2 @@
+# minoss
+MinIO OSS wrapper
