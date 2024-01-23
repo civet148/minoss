@@ -2,7 +2,6 @@ package minoss
 
 import (
 	"context"
-	"fmt"
 	"github.com/civet148/log"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -47,7 +46,7 @@ func NewMinOSS(opt Option) *MinOSS {
 		Secure: opt.Secure,
 	})
 	if err != nil {
-		log.Fatal("create oss client error [%s]", err.Error())
+		log.Panic("create OSS client error [%s]", err.Error())
 		return nil
 	}
 
@@ -73,13 +72,10 @@ func (m *MinOSS) ListBucket(ctx context.Context) (buckets []minio.BucketInfo, er
 func (m *MinOSS) MakeBucket(ctx context.Context, bucket string) (err error) {
 	var exist bool
 	if bucket == "" {
-		err = fmt.Errorf("bucket name is nil")
-		log.Error(err.Error())
-		return err
+		return log.Error("bucket name is nil")
 	}
 	if exist, err = m.mc.BucketExists(ctx, bucket); err != nil {
-		log.Error(err.Error())
-		return err
+		return log.Error(err.Error())
 	}
 	if exist {
 		return nil
@@ -89,8 +85,7 @@ func (m *MinOSS) MakeBucket(ctx context.Context, bucket string) (err error) {
 		ObjectLocking: true,
 	})
 	if err != nil {
-		log.Error(err)
-		return
+		return log.Error(err)
 	}
 	return
 }
@@ -101,7 +96,7 @@ func (m *MinOSS) GetObjectList(ctx context.Context, bucket string) (objects []*m
 
 	for object := range objectCh {
 		if object.Err != nil {
-			log.Error(object.Err)
+			log.Warnf("get object list error [%s]", object.Err)
 			continue
 		}
 		total++
@@ -115,7 +110,7 @@ func (m *MinOSS) SearchObject(ctx context.Context, bucket, prefix string, recurs
 	objectCh := m.mc.ListObjects(ctx, bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: recursive})
 	for object := range objectCh {
 		if object.Err != nil {
-			log.Errorf("search object error [%s]", object.Err.Error())
+			log.Warnf("search object error [%s]", object.Err.Error())
 			continue
 		}
 		total++
@@ -162,8 +157,7 @@ func (m *MinOSS) RemoveObject(ctx context.Context, bucket, objname string, optio
 	}
 	err = m.mc.RemoveObject(ctx, bucket, objname, opts)
 	if err != nil {
-		log.Error(err.Error())
-		return err
+		return log.Error(err.Error())
 	}
 	return
 }
