@@ -74,20 +74,30 @@ func NewMinOSS(opt Option) *MinOSS {
 		Secure: opt.Secure,
 	})
 	if err != nil {
-		log.Panic("create OSS client error [%s]", err.Error())
+		panic(log.Errorf("create oss user client error [%s]", err.Error()))
 		return nil
 	}
 	ac, err := madmin.New(opt.Endpoint, opt.AccessKey, opt.SecretKey, opt.Secure)
 	if err != nil {
-		log.Panic("create OSS admin error [%s]", err.Error())
+		panic(log.Errorf("create oss admin client error [%s]", err.Error()))
 		return nil
 	}
-	s := &MinOSS{
+	m := &MinOSS{
 		mc:  mc,
 		ac:  ac,
 		opt: opt,
 	}
-	return s
+	return m.initialize()
+}
+
+func (m *MinOSS) initialize() *MinOSS {
+	if m.opt.Bucket != "" {
+		err := m.MakeBucket(context.Background(), m.opt.Bucket)
+		if err != nil {
+			log.Panic(err.Error())
+		}
+	}
+	return m
 }
 
 // UserClient returns minio user client
@@ -133,7 +143,7 @@ func (m *MinOSS) MakeBucket(ctx context.Context, bucket string) (err error) {
 }
 
 // GetObjectList get bucket all objects
-func (m *MinOSS) GetObjectList(ctx context.Context, bucket string) (objects []*minio.ObjectInfo, total int64) {
+func (m *MinOSS) GetObjectList(ctx context.Context, bucket string) (objects []*minio.ObjectInfo, err error) {
 	objects = make([]*minio.ObjectInfo, 0)
 	objectCh := m.mc.ListObjects(ctx, bucket, minio.ListObjectsOptions{Recursive: false})
 
@@ -142,7 +152,6 @@ func (m *MinOSS) GetObjectList(ctx context.Context, bucket string) (objects []*m
 			log.Warnf("get object list error [%s]", object.Err)
 			continue
 		}
-		total++
 		objects = append(objects, &object)
 	}
 	return
