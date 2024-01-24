@@ -17,16 +17,6 @@ const (
 	OctetStream = "application/octet-stream"
 )
 
-type Region string
-
-const (
-	RegionCNNorth1     Region = "cn-north-1"     //s3.cn-north-1.amazonaws.com.cn
-	RegionCNNorthWest1 Region = "cn-northwest-1" //s3.cn-northwest-1.amazonaws.com.cn
-	RegionUSEast1      Region = "us-east-1"      //s3.amazonaws.com
-	RegionUSWest1      Region = "us-west-1"      //s3-fips-us-gov-west-1.amazonaws.com
-	RegionUSGovWest1   Region = "us-gov-west-1"  //s3-fips-us-gov-west-1.amazonaws.com
-)
-
 type Option struct {
 	Endpoint  string `json:"endpoint"`
 	AccessKey string `json:"access_key"`
@@ -217,6 +207,28 @@ func (m *MinOSS) RemoveObject(ctx context.Context, bucket, objname string, optio
 		return log.Error(err.Error())
 	}
 	return
+}
+
+func (m *MinOSS) GetBucketPolicy(ctx context.Context, bucket string) (string, error) {
+	return m.mc.GetBucketPolicy(ctx, bucket)
+}
+
+func (m *MinOSS) SetBucketPolicy(ctx context.Context, bucket, policy string) error {
+	return m.mc.SetBucketPolicy(ctx, bucket, policy)
+}
+
+func (m *MinOSS) RemoveBucketPolicy(ctx context.Context, bucket string) error {
+	return m.mc.SetBucketPolicy(ctx, bucket, "")
+}
+
+// SetBucketPublicPolicy sets the bucket to public read policy aims for file downloads directly from oss endpoint
+func (m *MinOSS) SetBucketPublicPolicy(ctx context.Context, bucket string) error {
+	policy := DefaultPublicPolicy(bucket)
+	err := m.SetBucketPolicy(ctx, bucket, policy)
+	if err != nil {
+		return log.Errorf(err.Error())
+	}
+	return nil
 }
 
 // AdminGetQuota get bucket quota (MiB)

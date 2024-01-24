@@ -68,3 +68,23 @@ func TestDownloadObject(t *testing.T) {
 	}
 	log.Infof("download file ok, written %v bytes", n)
 }
+
+func TestSetBucketPolicy(t *testing.T) {
+	policy, err := oss.GetBucketPolicy(ctx, minossBucketName)
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	log.Infof("bucket %s current policy [%s]", minossBucketName, policy)
+	err = oss.SetBucketPublicPolicy(ctx, minossBucketName)
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	policy, err = oss.GetBucketPolicy(ctx, minossBucketName)
+	if err != nil {
+		log.Errorf(err.Error())
+		return
+	}
+	log.Infof("bucket %s new policy [%s]", minossBucketName, policy)
+}
