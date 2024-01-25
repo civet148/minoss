@@ -178,6 +178,22 @@ func (m *MinOSS) UploadObject(ctx context.Context, bucket, objname string, objec
 	return
 }
 
+// UploadObjectFromFile uploads an object from file to bucket
+func (m *MinOSS) UploadObjectFromFile(ctx context.Context, bucket, objname, filepath string, options ...minio.PutObjectOptions) (err error) {
+	var opts minio.PutObjectOptions
+	if len(options) == 0 {
+		opts = DefaultPutObjectOptions()
+	} else {
+		opts = options[0]
+	}
+	_, err = m.mc.FPutObject(ctx, bucket, objname, filepath, opts)
+	if err != nil {
+		log.Error(err.Error())
+		return err
+	}
+	return
+}
+
 // DownloadObject downloads an object
 func (m *MinOSS) DownloadObject(ctx context.Context, bucket, objname string, writer io.Writer, options ...minio.GetObjectOptions) (written int64, err error) {
 	var reader *minio.Object
@@ -192,6 +208,21 @@ func (m *MinOSS) DownloadObject(ctx context.Context, bucket, objname string, wri
 		return 0, log.Errorf("get object [%s] from bucket [%s] error [%s]", objname, bucket, err.Error())
 	}
 	return io.Copy(writer, reader)
+}
+
+// DownloadObject2File downloads an object write to file
+func (m *MinOSS) DownloadObject2File(ctx context.Context, bucket, objname, filepath string, options ...minio.GetObjectOptions) (err error) {
+	var opts minio.GetObjectOptions
+	if len(options) == 0 {
+		opts = DefaultGetObjectOptions()
+	} else {
+		opts = options[0]
+	}
+	err = m.mc.FGetObject(ctx, bucket, objname, filepath, opts)
+	if err != nil {
+		return log.Errorf("get object [%s] from bucket [%s] error [%s]", objname, bucket, err.Error())
+	}
+	return nil
 }
 
 // RemoveObject remove object from bucket
